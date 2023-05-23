@@ -123,3 +123,52 @@ function checkMatch() {
     setTimeout(unflipCards, 1000);
   }
 }
+
+const themeButton = document.querySelector("#theme-button");
+themeButton.addEventListener("click", toggleTheme);
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+const difficultyButton = document.querySelector("#difficulty-button");
+difficultyButton.addEventListener("click", setDifficulty);
+
+
+function setDifficulty() {
+  const difficultySelect = document.querySelector("#difficulty");
+  const difficulty = difficultySelect.value;
+
+  switch (difficulty) {
+    case "easy":
+      // In easy mode, use 6 cards
+      imagePool = [...images, ...images];
+      break;
+    case "medium":
+      // In medium mode, use 12 cards
+      imagePool = [...images, ...images, ...images, ...images];
+      break;
+    case "hard":
+      // In hard mode, use 24 cards
+      imagePool = [
+        ...images,
+        ...images,
+        ...images,
+        ...images,
+        ...images,
+        ...images,
+        ...images,
+        ...images,
+      ];
+      break;
+    default:
+      console.error(`Unknown difficulty level ${difficulty}`);
+      return;
+  }
+
+  // Shuffle the image pool
+  shuffleArray(imagePool);
+
+  // Start the game
+  startGame();
+}
