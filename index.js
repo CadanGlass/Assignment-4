@@ -1,15 +1,12 @@
-// Select card-inner elements instead of card-item
 const cardInners = document.querySelectorAll(".card-inner");
 let flippedCards = [];
 let matchedCards = 0;
 let clicks = 0;
+let gameStarted = false;
 
 const clickCount = document.querySelector("#click-count");
-
-function incrementClicks() {
-  clicks++;
-  clickCount.innerHTML = `Click count: ${clicks} `;
-}
+const startButton = document.querySelector("#start-button");
+const resetButton = document.querySelector("#reset-button");
 
 const images = [
   "./images/muck.png",
@@ -26,13 +23,59 @@ function shuffleArray(array) {
   }
 }
 
-shuffleArray(imagePool);
+function startGame() {
+  if (gameStarted) return;
+  gameStarted = true;
 
-cardInners.forEach((cardInner, index) => {
-  cardInner.querySelector(".card-back img").src = imagePool.pop();
-  cardInner.dataset.id = index;
-  cardInner.addEventListener("click", handleClick);
-});
+  // Shuffle the image pool
+  shuffleArray(imagePool);
+
+  // Reset game state
+  resetGameState();
+
+  // Assign an image to each card
+  cardInners.forEach((cardInner, index) => {
+    // Use index to access image from the shuffled image pool
+    cardInner.querySelector(".card-back img").src = imagePool[index];
+    cardInner.dataset.id = index;
+    cardInner.addEventListener("click", handleClick);
+  });
+}
+
+function resetGame() {
+  gameStarted = false;
+
+  // Reset image pool
+  imagePool = [...images, ...images];
+
+  // Code to reset game goes here
+  // For example, remove event listeners from cards
+  cardInners.forEach((cardInner, index) => {
+    cardInner.removeEventListener("click", handleClick);
+  });
+
+  // And reset the game state
+  resetGameState();
+}
+
+function resetGameState() {
+  flippedCards = [];
+  matchedCards = 0;
+  clicks = 0;
+  clickCount.innerHTML = `Click count: ${clicks} `;
+
+  cardInners.forEach((cardInner, index) => {
+    cardInner.classList.remove("flip", "matched");
+  });
+}
+
+function incrementClicks() {
+  clicks++;
+  clickCount.innerHTML = `Click count: ${clicks} `;
+}
+
+startButton.addEventListener("click", startGame);
+resetButton.addEventListener("click", resetGame);
 
 function handleClick(e) {
   const card = e.currentTarget;
