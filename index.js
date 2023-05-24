@@ -1,12 +1,22 @@
 const cardInners = document.querySelectorAll(".card-inner");
+const totalCount = document.querySelector("#total-count");
+const gameTimer = document.querySelector("#game-timer");
+const matchCount = document.querySelector("#match-count");
+const remainingCount = document.querySelector("#remaining-count");
+
 let flippedCards = [];
 let matchedCards = 0;
 let clicks = 0;
 let gameStarted = false;
 
+let startTime = null;
+let timerInterval = null;
+
 const clickCount = document.querySelector("#click-count");
 const startButton = document.querySelector("#start-button");
 const resetButton = document.querySelector("#reset-button");
+const powerUpButton = document.querySelector("#power-up-button");
+powerUpButton.addEventListener("click", usePowerUp);
 
 const images = [
   "./images/muck.png",
@@ -33,6 +43,13 @@ function startGame() {
   // Reset game state
   resetGameState();
 
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+
+  // Initialize the counts
+  totalCount.innerHTML = `Total pairs: ${cardInners.length / 2}`;
+  updateCounts();
+
   // Assign an image to each card
   cardInners.forEach((cardInner, index) => {
     // Use index to access image from the shuffled image pool
@@ -54,8 +71,24 @@ function resetGame() {
     cardInner.removeEventListener("click", handleClick);
   });
 
+  powerUpUsed = false;
+
+  clearInterval(timerInterval);
+  gameTimer.innerHTML = "Game timer: 0s";
+
+  // Reset the counts
+  matchCount.innerHTML = `Pairs matched: 0`;
+  remainingCount.innerHTML = `Pairs left: ${cardInners.length / 2}`;
+
   // And reset the game state
   resetGameState();
+}
+
+function updateCounts() {
+  matchCount.innerHTML = `Pairs matched: ${matchedCards / 2}`;
+  remainingCount.innerHTML = `Pairs left: ${
+    cardInners.length / 2 - matchedCards / 2
+  }`;
 }
 
 function resetGameState() {
@@ -68,6 +101,7 @@ function resetGameState() {
     cardInner.classList.remove("flip", "matched");
   });
 }
+
 
 function incrementClicks() {
   clicks++;
@@ -91,6 +125,8 @@ function handleClick(e) {
   incrementClicks();
   flippedCards.push(card);
   checkMatch();
+
+  updateCounts();
 }
 
 function flipCard(card) {
@@ -115,13 +151,22 @@ function checkMatch() {
     matchedCards += 2;
     flippedCards = [];
     if (matchedCards === cardInners.length) {
-      console.log("You won the game!");
+      setTimeout(() => {
+        alert("You won the game!");
+      }, 1000)
+      
+      clearInterval(timerInterval);
       // Display a winning message
     }
   } else {
     // Cards do not match, unflip after a delay
     setTimeout(unflipCards, 1000);
   }
+}
+
+function updateTimer() {
+  const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+  gameTimer.innerHTML = `Game timer: ${elapsedSeconds}s`;
 }
 
 const themeButton = document.querySelector("#theme-button");
@@ -131,7 +176,25 @@ function toggleTheme() {
   document.body.classList.toggle("dark");
 }
 
-const difficultyButton = document.querySelector("#difficulty-button");
-difficultyButton.addEventListener("click", setDifficulty);
+let powerUpUsed = false;
 
+function usePowerUp() {
+  if (powerUpUsed || !gameStarted) return; // power-up can only be used once per game, and only after the game has started
+  powerUpUsed = true;
+
+  // Flip all the cards
+  cardInners.forEach((cardInner) => {
+    cardInner.classList.add("flip");
+  });
+
+  // Then after a short delay, flip them back
+  setTimeout(() => {
+    cardInners.forEach((cardInner) => {
+      // Only flip back cards that haven't been matched
+      if (!cardInner.classList.contains("matched")) {
+        cardInner.classList.remove("flip");
+      }
+    });
+  }, 2000); // 2 seconds, adjust as needed
+}
 
