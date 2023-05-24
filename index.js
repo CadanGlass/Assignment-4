@@ -3,13 +3,18 @@ const totalCount = document.querySelector("#total-count");
 const gameTimer = document.querySelector("#game-timer");
 const matchCount = document.querySelector("#match-count");
 const remainingCount = document.querySelector("#remaining-count");
+const difficultySelector = document.querySelector("#difficulty-selector");
+let difficulty = difficultySelector.value; // This will be 'easy', 'medium', or 'hard'
 
 let flippedCards = [];
 let matchedCards = 0;
 let clicks = 0;
 let gameStarted = false;
+let timeLimit;
+let lock = false;
 
-let startTime = null;
+
+let startTime;
 let timerInterval = null;
 
 const clickCount = document.querySelector("#click-count");
@@ -33,9 +38,37 @@ function shuffleArray(array) {
   }
 }
 
+function updateTimer() {
+  const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+  gameTimer.innerHTML = `Game timer: ${elapsedSeconds}s`;
+
+  if (elapsedSeconds >= timeLimit) {
+    clearInterval(timerInterval);
+    alert("Time's up! Game over.");
+    resetGame();
+  }
+}
+
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+
+  let difficulty = difficultySelector.value;
+  switch (difficulty) {
+    case "easy":
+      timeLimit = 60;
+      break;
+    case "medium":
+      timeLimit = 45;
+      break;
+    case "hard":
+      timeLimit = 30;
+      break;
+    default:
+      timeLimit = 60;
+  }
+
+  clearInterval(timerInterval);
 
   // Shuffle the image pool
   shuffleArray(imagePool);
@@ -59,6 +92,7 @@ function startGame() {
   });
 }
 
+
 function resetGame() {
   gameStarted = false;
 
@@ -70,7 +104,8 @@ function resetGame() {
   cardInners.forEach((cardInner, index) => {
     cardInner.removeEventListener("click", handleClick);
   });
-
+ clearInterval(timerInterval);
+ gameTimer.innerHTML = "Game timer: 0s";
   powerUpUsed = false;
 
   clearInterval(timerInterval);
@@ -117,7 +152,8 @@ function handleClick(e) {
   if (
     flippedCards.includes(card) ||
     card.classList.contains("matched") ||
-    flippedCards.length >= 2
+    flippedCards.length >= 2 ||
+    lock // add this line
   ) {
     return;
   }
@@ -128,6 +164,7 @@ function handleClick(e) {
 
   updateCounts();
 }
+
 
 function flipCard(card) {
   card.classList.add("flip");
@@ -153,20 +190,35 @@ function checkMatch() {
     if (matchedCards === cardInners.length) {
       setTimeout(() => {
         alert("You won the game!");
-      }, 1000)
-      
+      }, 1000);
+
       clearInterval(timerInterval);
       // Display a winning message
     }
   } else {
     // Cards do not match, unflip after a delay
-    setTimeout(unflipCards, 1000);
+    lock = true; // Lock the board
+    setTimeout(() => {
+      unflipCards();
+      lock = false; // Unlock the board
+    }, 1000);
   }
 }
 
+
 function updateTimer() {
   const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-  gameTimer.innerHTML = `Game timer: ${elapsedSeconds}s`;
+  const remainingSeconds = timeLimit - elapsedSeconds;
+
+  if (remainingSeconds <= 0) {
+    // If time is up, stop the timer and end the game
+    clearInterval(timerInterval);
+    gameTimer.innerHTML = "Time's up!";
+    gameStarted = false; // Reset the game state
+    // You can also display a message that the player lost, reset the game, etc.
+  } else {
+    gameTimer.innerHTML = `Time remaining: ${remainingSeconds}s`;
+  }
 }
 
 const themeButton = document.querySelector("#theme-button");
